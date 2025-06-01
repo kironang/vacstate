@@ -4,67 +4,164 @@
   <meta charset="UTF-8" />
   <!-- viewport for responsiveness -->
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Vaccination Coverage by Jurisdiction</title>
-  <!-- Include D3 v7 -->
+  <title>VacState | United States Vaccination Coverage | A Data Visualization Website Created by Kiron Ang</title>
+
+  <!-- D3.js v7 -->
   <script src="https://d3js.org/d3.v7.min.js"></script>
 
+  <!-- Google Font: Inter -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+
   <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-lighter: #161b22;
+      --bg-header: #21262d;
+      --text-default: #c9d1d9;
+      --text-light: #ffffff;
+      --accent: #58a6ff;
+      --border: #30363d;
+      --input-bg: #161b22;
+      --input-border: #30363d;
+      --loading-text: #8b949e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 1rem;
-      background-color: #f9f9f9;
+      background-color: var(--bg-dark);
+      color: var(--text-default);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.6;
     }
-    h1 {
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      color: var(--text-light);
+      font-weight: 600;
+    }
+
+    #menu-icon {
       font-size: 1.5rem;
-      margin-bottom: 0.5rem;
+      color: var(--text-light);
+      cursor: pointer;
     }
+
     #controls {
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
-    select {
+
+    label {
       font-size: 1rem;
-      padding: 0.4rem;
+      color: var(--text-light);
     }
+
+    select {
+      background-color: var(--input-bg);
+      color: var(--text-default);
+      border: 1px solid var(--input-border);
+      padding: 0.5rem 0.75rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      outline: none;
+      transition: border-color 0.2s ease-in-out;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    #loading {
+      font-style: italic;
+      color: var(--loading-text);
+    }
+
     table {
-      border-collapse: collapse;
       width: 100%;
+      border-collapse: collapse;
       margin-top: 1rem;
-      background-color: white;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      background-color: var(--bg-lighter);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
     }
-    th, td {
-      padding: 0.6rem;
-      border: 1px solid #ccc;
+
+    thead {
+      background-color: var(--bg-header);
+    }
+
+    th,
+    td {
+      padding: 0.75rem 1rem;
       text-align: left;
       font-size: 0.9rem;
     }
+
     th {
-      background-color: #eee;
-      font-weight: bold;
+      color: var(--text-light);
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
     }
-    tr:nth-child(even) {
-      background-color: #f5f5f5;
+
+    tbody tr:nth-child(odd) {
+      background-color: var(--bg-lighter);
     }
-    #loading {
-      font-style: italic;
-      color: #555;
+
+    tbody tr:nth-child(even) {
+      background-color: var(--bg-dark);
+    }
+
+    td {
+      color: var(--text-default);
+    }
+
+    tbody tr:hover {
+      background-color: var(--border);
     }
   </style>
 </head>
 
 <body>
-  <h1>Vaccination Coverage: Adolescents (13–17) by State/Territory</h1>
+  <div class="container">
+    <header>
+      <h1>VacState</h1>
+      <div id="menu-icon">☰</div>
+    </header>
 
-  <div id="controls">
-    <label for="state-select"><strong>Select a state/territory:</strong></label>
-    <select id="state-select">
-      <option value="" selected disabled>Loading…</option>
-    </select>
-    <span id="loading" style="display: none;">Fetching data…</span>
-  </div>
+    <div id="controls">
+      <label for="state-select"><strong>Select a state/territory:</strong></label>
+      <select id="state-select">
+        <option value="" disabled selected>Choose a state/territory…</option>
+      </select>
+      <span id="loading" style="display: none;">Fetching data…</span>
+    </div>
 
-  <div id="data-display">
-    <!-- The table for showing results will be injected here -->
+    <div id="data-display">
+      <!-- The table for showing results will be injected here -->
+    </div>
   </div>
 
   <script>
@@ -84,23 +181,16 @@
 
     // 2. Populate the <select> with those jurisdictions
     const selectEl = d3.select("#state-select");
-    selectEl.selectAll("option")
+    selectEl.selectAll("option.state-option")
       .data(jurisdictions)
       .enter()
       .append("option")
+        .classed("state-option", true)
         .attr("value", d => d)
         .text(d => d);
 
-    // Replace the initial placeholder
-    selectEl.property("selectedIndex", 0);
-    selectEl.insert("option", ":first-child")
-      .attr("value", "")
-      .text("Choose a state/territory…")
-      .property("disabled", true)
-      .property("selected", true);
-
     // 3. When the user changes selection, fetch data and display
-    selectEl.on("change", function() {
+    selectEl.on("change", function () {
       const chosen = this.value;
       if (!chosen) return;
 
@@ -112,12 +202,11 @@
 
       // Build the Socrata API URL: filter by geography
       const baseURL = "https://data.cdc.gov/resource/ee48-w5t6.json";
-      // Note: Socrata expects the field name in lowercase. 
-      // We assume "geography" is correct; adjust if needed.
-      const queryURL = baseURL + "?geography=" + encodeURIComponent(chosen);
+      const queryURL =
+        baseURL + "?geography=" + encodeURIComponent(chosen);
 
       d3.json(queryURL)
-        .then(data => {
+        .then((data) => {
           d3.select("#loading").style("display", "none");
 
           if (!data || data.length === 0) {
@@ -129,9 +218,8 @@
 
           // Determine which keys to display (omit geography/geography_type)
           const allKeys = Object.keys(data[0]);
-          // We’ll exclude "geography" and "geography_type" since user knows the jurisdiction
-          const columns = allKeys.filter(k => 
-            k !== "geography" && k !== "geography_type"
+          const columns = allKeys.filter(
+            (k) => k !== "geography" && k !== "geography_type"
           );
 
           // Create a table
@@ -145,25 +233,24 @@
             .data(columns)
             .enter()
             .append("th")
-              .text(d => {
-                // Convert keys like "vaccine_sample" to "Vaccine/Sample"
-                return d
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, ch => ch.toUpperCase());
-              });
+            .text((d) => {
+              // Convert keys like "vaccine_sample" to "Vaccine Sample"
+              return d
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (ch) => ch.toUpperCase());
+            });
 
           // Body rows
           const tbody = table.append("tbody");
 
-          // Add one row per record
-          data.forEach(record => {
+          data.forEach((record) => {
             const row = tbody.append("tr");
-            columns.forEach(col => {
+            columns.forEach((col) => {
               row.append("td").text(record[col] === undefined ? "" : record[col]);
             });
           });
         })
-        .catch(error => {
+        .catch((error) => {
           d3.select("#loading").style("display", "none");
           console.error("Error fetching data:", error);
           d3.select("#data-display")

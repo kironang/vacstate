@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- viewport for responsiveness -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vaccination Coverage by Jurisdiction</title>
+  <!-- Include D3 v7 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 1rem;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    #controls {
+      margin-bottom: 1rem;
+    }
+    select {
+      font-size: 1rem;
+      padding: 0.4rem;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+      background-color: white;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    th {
+      background-color: #eee;
+      font-weight: bold;
+    }
+    tr:nth-child(even) {
+      background-color: #f5f5f5;
+    }
+    #loading {
+      font-style: italic;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Vaccination Coverage: Adolescents (13–17) by State/Territory</h1>
+
+  <div id="controls">
+    <label for="state-select"><strong>Select a state/territory:</strong></label>
+    <select id="state-select">
+      <option value="" selected disabled>Loading…</option>
+    </select>
+    <span id="loading" style="display: none;">Fetching data…</span>
+  </div>
+
+  <div id="data-display">
+    <!-- The table for showing results will be injected here -->
+  </div>
+
+  <script>
+    // 1. Hardcode the full list of jurisdictions (50 states + DC + 3 territories)
+    const jurisdictions = [
+      "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+      "Connecticut", "Delaware", "District of Columbia", "Florida", "Georgia",
+      "Guam", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas",
+      "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan",
+      "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+      "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina",
+      "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Puerto Rico",
+      "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
+      "U.S. Virgin Islands", "Utah", "Vermont", "Virginia", "Washington",
+      "West Virginia", "Wisconsin", "Wyoming"
+    ];
+
+    // 2. Populate the <select> with those jurisdictions
+    const selectEl = d3.select("#state-select");
+    selectEl.selectAll("option")
+      .data(jurisdictions)
+      .enter()
+      .append("option")
+        .attr("value", d => d)
+        .text(d => d);
+
+    // Replace the initial placeholder
+    selectEl.property("selectedIndex", 0);
+    selectEl.insert("option", ":first-child")
+      .attr("value", "")
+      .text("Choose a state/territory…")
+      .property("disabled", true)
+      .property("selected", true);
+
+    // 3. When the user changes selection, fetch data and display
+    selectEl.on("change", function() {
+      const chosen = this.value;
+      if (!chosen) return;
+
+      // Show loading text
+      d3.select("#loading").style("display", "inline");
+
+      // Clear any existing table
+      d3.select("#data-display").html("");
+
+      // Build the Socrata API URL: filter by geography
+      const baseURL = "https://data.cdc.gov/resource/ee48-w5t6.json";
+      // Note: Socrata expects the field name in lowercase. 
+      // We assume "geography" is correct; adjust if needed.
+      const queryURL = baseURL + "?geography=" + encodeURIComponent(chosen);
+
+      d3.json(queryURL)
+        .then(data => {
+          d3.select("#loading").style("display", "none");
+
+          if (!data || data.length === 0) {
+            d3.select("#data-display")
+              .append("p")
+              .text("No data found for " + chosen + ".");
+            return;
+          }
+
+          // Determine which keys to display (omit geography/geography_type)
+          const allKeys = Object.keys(data[0]);
+          // We’ll exclude "geography" and "geography_type" since user knows the jurisdiction
+          const columns = allKeys.filter(k => 
+            k !== "geography" && k !== "geography_type"
+          );
+
+          // Create a table
+          const table = d3.select("#data-display")
+            .append("table");
+
+          // Header row
+          const thead = table.append("thead");
+          const headerRow = thead.append("tr");
+          headerRow.selectAll("th")
+            .data(columns)
+            .enter()
+            .append("th")
+              .text(d => {
+                // Convert keys like "vaccine_sample" to "Vaccine/Sample"
+                return d
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, ch => ch.toUpperCase());
+              });
+
+          // Body rows
+          const tbody = table.append("tbody");
+
+          // Add one row per record
+          data.forEach(record => {
+            const row = tbody.append("tr");
+            columns.forEach(col => {
+              row.append("td").text(record[col] === undefined ? "" : record[col]);
+            });
+          });
+        })
+        .catch(error => {
+          d3.select("#loading").style("display", "none");
+          console.error("Error fetching data:", error);
+          d3.select("#data-display")
+            .append("p")
+            .text("Error loading data for " + chosen + ".");
+        });
+    });
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>VacState</title>
+  <title>VacState – Unique Values</title>
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <style>
     body {
@@ -17,31 +17,32 @@
       font-size: 1rem;
       color: #555;
     }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      margin-top: 10px;
+    .column-section {
+      margin-bottom: 25px;
     }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-      text-align: left;
+    .column-section h2 {
+      font-size: 1.1rem;
+      margin-bottom: 5px;
+    }
+    .column-section ul {
+      list-style: disc;
+      margin-left: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+      padding-left: 0;
+    }
+    .column-section ul li {
+      padding: 2px 0;
       font-size: 0.9rem;
-    }
-    th {
-      background-color: #f2f2f2;
-    }
-    tbody tr:nth-child(even) {
-      background-color: #fafafa;
     }
   </style>
 </head>
 <body>
-  <h1>VacState</h1>
-  <div id="counts">Loading data...</div>
-  <table id="data-table">
-    <!-- Table header and body will be populated by D3 -->
-  </table>
+  <h1>VacState: Unique Values by Column</h1>
+  <div id="counts">Loading data and computing unique values...</div>
+  <div id="unique-values-container">
+    <!-- Unique values per column will be inserted here -->
+  </div>
 
   <script>
     // Replace $limit value if your dataset has more than 50,000 rows.
@@ -57,42 +58,56 @@
       // Determine column names from the first object’s keys
       const columns = Object.keys(data[0]);
 
+      // Create a mapping from column name → Set of unique values
+      const uniqueValuesMap = {};
+      columns.forEach(col => {
+        uniqueValuesMap[col] = new Set();
+      });
+
+      // Populate each Set with values from every row
+      data.forEach(row => {
+        columns.forEach(col => {
+          // Use empty string if the field is missing or null/undefined
+          const val = row[col] != null ? String(row[col]) : '';
+          uniqueValuesMap[col].add(val);
+        });
+      });
+
+      // Convert each Set into a sorted array (alphabetical order)
+      columns.forEach(col => {
+        const arr = Array.from(uniqueValuesMap[col]);
+        arr.sort((a, b) => a.localeCompare(b));
+        uniqueValuesMap[col] = arr;
+      });
+
       // Update the counts header
       const rowCount = data.length;
       const colCount = columns.length;
       d3.select('#counts')
-        .text(`Rows: ${rowCount} | Columns: ${colCount}`);
+        .text(`Rows fetched: ${rowCount} | Columns: ${colCount} → Displaying unique values for each column`);
 
-      // Select the table element
-      const table = d3.select('#data-table');
+      // Select the container where we will insert each column's unique-values list
+      const container = d3.select('#unique-values-container');
 
-      // Append the header row
-      const thead = table.append('thead');
-      thead.append('tr')
-        .selectAll('th')
-        .data(columns)
-        .enter()
-        .append('th')
-        .text(d => d);
+      // For each column, append a section with the column name and a scrollable list of unique values
+      columns.forEach(col => {
+        const section = container.append('div')
+          .attr('class', 'column-section');
 
-      // Append the body rows
-      const tbody = table.append('tbody');
-      const rows = tbody.selectAll('tr')
-        .data(data)
-        .enter()
-        .append('tr');
+        // Column name as a sub-heading
+        section.append('h2')
+          .text(col);
 
-      // For each row, append a cell for every column
-      rows.selectAll('td')
-        .data(function(row) {
-          return columns.map(function(col) {
-            // Some records might not have every field; fallback to empty string
-            return { value: row[col] || '' };
-          });
-        })
-        .enter()
-        .append('td')
-        .text(d => d.value);
+        // Unordered list of unique values
+        const ul = section.append('ul');
+
+        ul.selectAll('li')
+          .data(uniqueValuesMap[col])
+          .enter()
+          .append('li')
+          .text(d => d === '' ? '(empty string)' : d);
+      });
+
     }).catch(function(error) {
       console.error('Error fetching data:', error);
       d3.select('#counts').text('Error fetching data from the API.');

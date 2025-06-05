@@ -10,13 +10,13 @@ function switchTab(tabId) {
   d3.select(`.tab[data-tab="${tabId}"]`).classed('active', true);
   d3.select(`#tab${tabId}`).classed('active', true);
 
-  // If tab A or B is clicked, (re)load the data
+  // If tab A or B is clicked, (re)load its data
   if (tabId === 'A') {
     loadTabA();
   } else if (tabId === 'B') {
     loadTabB();
   }
-  // Tab C is static
+  // Tab C is static, no data fetch necessary
 }
 
 // -------------------------------
@@ -26,7 +26,7 @@ function switchTab(tabId) {
 // -------------------------------
 function loadTabA() {
   const container = d3.select('#tabA');
-  container.html(''); // clear any old content
+  container.html(''); // Clear previous content
 
   // Show a loading message
   container.append('p').text('Fetching Tab A data…');
@@ -36,7 +36,7 @@ function loadTabA() {
 
   d3.json(urlA)
     .then(data => {
-      container.html(''); // clear loading message
+      container.html(''); // Clear loading message
 
       const rowCount = data.length;
       // If at least one row, grab all column keys
@@ -64,7 +64,9 @@ function loadTabA() {
           const uniquesArr = Array.from(uniquesSet).sort();
 
           // Place each column + its unique values in a <p>
-          container.append('p').text(`${key}: ${uniquesArr.join(', ')}`);
+          container
+            .append('p')
+            .text(`${key}: ${uniquesArr.join(', ')}`);
         });
       }
     })
@@ -79,25 +81,22 @@ function loadTabA() {
 
 // -------------------------------
 // Tab B: “vh55-3he6”
-// - Include population_sample_size via $select=*, population_sample_size
-// - Limit to 300,000 rows
+// - Simply request all fields (including population_sample_size) with $limit=300000
 // - Compute all unique values per column
 // -------------------------------
 function loadTabB() {
   const container = d3.select('#tabB');
-  container.html(''); // clear any old content
+  container.html(''); // Clear previous content
 
   container.append('p').text('Fetching Tab B data…');
 
-  // Include ALL columns (*) plus population_sample_size explicitly, and limit 300k
-  const urlB =
-    'https://data.cdc.gov/resource/vh55-3he6.json?' +
-    '$select=*, population_sample_size' +
-    '&$limit=300000';
+  // By default, “population_sample_size” is included in each record.
+  // Just use $limit=300000 to retrieve up to 300k rows.
+  const urlB = 'https://data.cdc.gov/resource/vh55-3he6.json?$limit=300000';
 
   d3.json(urlB)
     .then(data => {
-      container.html(''); // clear loading message
+      container.html(''); // Clear loading message
 
       const rowCount = data.length;
       const colKeys = rowCount > 0
@@ -123,7 +122,9 @@ function loadTabB() {
           const uniquesArr = Array.from(uniquesSet).sort();
 
           // Place each column + its unique values in a <p>
-          container.append('p').text(`${key}: ${uniquesArr.join(', ')}`);
+          container
+            .append('p')
+            .text(`${key}: ${uniquesArr.join(', ')}`);
         });
       }
     })

@@ -16,19 +16,23 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 #title {
   font-size: 2rem;
   line-height: 1;
 }
+
 #tabs {
   margin-top: 0.5rem;
 }
+
 .tab {
   margin: 0 1rem;
   cursor: pointer;
   font-size: 1rem;
   user-select: none;
 }
+
 .tab.active {
   text-decoration: underline;
 }
@@ -38,21 +42,35 @@ body {
   height: 90vh;
   padding: 1rem;
   box-sizing: border-box;
-  /* Body text color as requested */
   color: #070353;
+  text-align: center; /* center all content */
 }
+
 .tab-content {
   display: none;
   height: 100%;
   overflow: auto;
 }
+
 .tab-content.active {
   display: block;
 }
+
+/* Link styles */
 a {
   color: #070353;
   text-decoration: underline;
 }
+
 a:hover {
   opacity: 0.8;
+}
+
+/* If we ever need lists, center them by default */
+.tab-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  display: inline-block; /* so it centers as a block */
+  text-align: left;      /* keep list items left-aligned */
 }

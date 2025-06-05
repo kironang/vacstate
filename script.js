@@ -1,14 +1,16 @@
-// Helper: switch active tab
+// -------------------------------
+// Helper: Switch active tab
+// -------------------------------
 function switchTab(tabId) {
-  // Deactivate all tabs and contents
+  // Remove “active” class from all tabs & contents
   d3.selectAll('.tab').classed('active', false);
   d3.selectAll('.tab-content').classed('active', false);
 
-  // Activate selected tab and content
+  // Add “active” class to the clicked tab and corresponding content
   d3.select(`.tab[data-tab="${tabId}"]`).classed('active', true);
   d3.select(`#tab${tabId}`).classed('active', true);
 
-  // Load data for A or B when clicked
+  // If tab A or B is clicked, (re)load the data
   if (tabId === 'A') {
     loadTabA();
   } else if (tabId === 'B') {
@@ -17,12 +19,19 @@ function switchTab(tabId) {
   // Tab C is static
 }
 
-// Tab A: load ee48-w5t6.json with $limit=30000, count rows & columns, then list column titles
+// -------------------------------
+// Tab A: “ee48-w5t6”
+// - Limit to 30,000 rows
+// - Compute all unique values per column
+// -------------------------------
 function loadTabA() {
   const container = d3.select('#tabA');
-  container.html(''); // clear previous content
+  container.html(''); // clear any old content
+
+  // Show a loading message
   container.append('p').text('Fetching Tab A data…');
 
+  // Socrata API endpoint with $limit=30000
   const urlA = 'https://data.cdc.gov/resource/ee48-w5t6.json?$limit=30000';
 
   d3.json(urlA)
@@ -30,20 +39,33 @@ function loadTabA() {
       container.html(''); // clear loading message
 
       const rowCount = data.length;
-      let colKeys = [];
-      if (rowCount > 0) {
-        colKeys = Object.keys(data[0]);
-      }
+      // If at least one row, grab all column keys
+      const colKeys = rowCount > 0
+        ? Object.keys(data[0])
+        : [];
       const colCount = colKeys.length;
 
+      // Display basic info
       container.append('p').text('Tab A (ee48-w5t6):');
       container.append('p').text(`Number of rows (up to 30,000): ${rowCount}`);
       container.append('p').text(`Number of columns: ${colCount}`);
 
+      // If there are columns, compute & display unique values per column
       if (colCount > 0) {
-        container.append('p').text('Column titles:');
-        // Show comma-separated list in one <p>
-        container.append('p').text(colKeys.join(', '));
+        container.append('p').text('Unique values per column:');
+        colKeys.forEach(key => {
+          // Build a Set of unique values (skip undefined/null)
+          const uniquesSet = new Set();
+          data.forEach(row => {
+            if (row[key] !== undefined && row[key] !== null) {
+              uniquesSet.add(row[key]);
+            }
+          });
+          const uniquesArr = Array.from(uniquesSet).sort();
+
+          // Place each column + its unique values in a <p>
+          container.append('p').text(`${key}: ${uniquesArr.join(', ')}`);
+        });
       }
     })
     .catch(error => {
@@ -55,32 +77,54 @@ function loadTabA() {
     });
 }
 
-// Tab B: load vh55-3he6.json with $limit=300000, count rows & columns, then list column titles
+// -------------------------------
+// Tab B: “vh55-3he6”
+// - Include population_sample_size via $select=*, population_sample_size
+// - Limit to 300,000 rows
+// - Compute all unique values per column
+// -------------------------------
 function loadTabB() {
   const container = d3.select('#tabB');
-  container.html(''); // clear previous content
+  container.html(''); // clear any old content
+
   container.append('p').text('Fetching Tab B data…');
 
-  const urlB = 'https://data.cdc.gov/resource/vh55-3he6.json?$limit=300000';
+  // Include ALL columns (*) plus population_sample_size explicitly, and limit 300k
+  const urlB =
+    'https://data.cdc.gov/resource/vh55-3he6.json?' +
+    '$select=*, population_sample_size' +
+    '&$limit=300000';
 
   d3.json(urlB)
     .then(data => {
       container.html(''); // clear loading message
 
       const rowCount = data.length;
-      let colKeys = [];
-      if (rowCount > 0) {
-        colKeys = Object.keys(data[0]);
-      }
+      const colKeys = rowCount > 0
+        ? Object.keys(data[0])
+        : [];
       const colCount = colKeys.length;
 
+      // Display basic info
       container.append('p').text('Tab B (vh55-3he6):');
       container.append('p').text(`Number of rows (up to 300,000): ${rowCount}`);
       container.append('p').text(`Number of columns: ${colCount}`);
 
+      // If there are columns, compute & display unique values per column
       if (colCount > 0) {
-        container.append('p').text('Column titles:');
-        container.append('p').text(colKeys.join(', '));
+        container.append('p').text('Unique values per column:');
+        colKeys.forEach(key => {
+          const uniquesSet = new Set();
+          data.forEach(row => {
+            if (row[key] !== undefined && row[key] !== null) {
+              uniquesSet.add(row[key]);
+            }
+          });
+          const uniquesArr = Array.from(uniquesSet).sort();
+
+          // Place each column + its unique values in a <p>
+          container.append('p').text(`${key}: ${uniquesArr.join(', ')}`);
+        });
       }
     })
     .catch(error => {
@@ -92,13 +136,17 @@ function loadTabB() {
     });
 }
 
+// -------------------------------
 // Attach click listeners to tabs
-d3.selectAll('.tab').on('click', function () {
+// -------------------------------
+d3.selectAll('.tab').on('click', function() {
   const tabId = d3.select(this).attr('data-tab');
   switchTab(tabId);
 });
 
-// Load Tab A by default on page load
+// -------------------------------
+// On initial load, show Tab A
+// -------------------------------
 document.addEventListener('DOMContentLoaded', () => {
   loadTabA();
 });

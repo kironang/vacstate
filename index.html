@@ -3,58 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>VacState</title>
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <style>
-    /* Global font */
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-    }
-
-    /* Header (10% of viewport height) */
-    #header {
-      height: 10vh;
-      width: 100vw;
-      background-color: #070353;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    #title {
-      font-size: 2rem;
-      line-height: 1;
-    }
-    #tabs {
-      margin-top: 0.5rem;
-    }
-    .tab {
-      margin: 0 1rem;
-      cursor: pointer;
-      font-size: 1rem;
-      user-select: none;
-    }
-    .tab.active {
-      text-decoration: underline;
-    }
-
-    /* Content area (remaining 90% of viewport) */
-    #content {
-      height: 90vh;
-      padding: 1rem;
-      box-sizing: border-box;
-    }
-    .tab-content {
-      display: none;
-      height: 100%;
-      overflow: auto;
-    }
-    .tab-content.active {
-      display: block;
-    }
-  </style>
 </head>
 
 <body>
@@ -72,13 +22,11 @@
   <div id="content">
     <!-- Tab A Content -->
     <div id="tabA" class="tab-content active">
-      <!-- D3 will load and print row/column count here -->
       <p>Loading Tab A data...</p>
     </div>
 
     <!-- Tab B Content -->
     <div id="tabB" class="tab-content">
-      <!-- D3 will load Tab B data here -->
       <p>Loading Tab B data...</p>
     </div>
 
@@ -86,115 +34,33 @@
     <div id="tabC" class="tab-content">
       <h2>About the Data</h2>
       <p>
-        This application visualizes adolescent vaccination coverage data
-        sourced from the CDC’s Socrata API endpoints. Tab A loads data from
-        <code>ee48-w5t6</code> (Vaccination Coverage among Adolescents
-        13–17 Years). Tab B will load a related dataset from
-        <code>vh55-3he6</code>. Future enhancements may include deeper analysis
-        and additional visualizations.
+        Tab A source (Vaccination Coverage among Adolescents 13–17 Years):<br />
+        <a href="https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6" target="_blank">
+          https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6
+        </a>
+      </p>
+      <p>
+        Tab B source (Influenza Vaccination Coverage for All Ages ≥6 Months):<br />
+        <a href="https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6" target="_blank">
+          https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6
+        </a>
+      </p>
+      <h2>Branding & Style Guide</h2>
+      <p>
+        See Waco-Texas Communications & Marketing Brand Guide:<br />
+        <a href="https://www.waco-texas.com/Departments/Communications-Marketing/Brand-Guide" target="_blank">
+          https://www.waco-texas.com/Departments/Communications-Marketing/Brand-Guide
+        </a>
       </p>
       <h2>Author Information</h2>
       <p>
-        Created by [Your Name]. For questions or feedback, contact:
+        Created by [Your Name].<br />
+        For questions or feedback, contact:
         <a href="mailto:youremail@example.com">youremail@example.com</a>.
       </p>
     </div>
   </div>
 
-  <script>
-    // Helper: switch active tab
-    function switchTab(tabId) {
-      // Deactivate all tabs and contents
-      d3.selectAll('.tab').classed('active', false);
-      d3.selectAll('.tab-content').classed('active', false);
-
-      // Activate selected tab and content
-      d3.select(`.tab[data-tab="${tabId}"]`).classed('active', true);
-      d3.select(`#tab${tabId}`).classed('active', true);
-
-      // Load data for A or B when clicked
-      if (tabId === 'A') {
-        loadTabA();
-      } else if (tabId === 'B') {
-        loadTabB();
-      }
-      // Tab C is static
-    }
-
-    // Tab A: load ee48-w5t6.json, count rows & columns
-    function loadTabA() {
-      const container = d3.select('#tabA');
-      container.html(''); // clear previous content
-
-      d3.json('https://data.cdc.gov/resource/ee48-w5t6.json')
-        .then(data => {
-          const rowCount = data.length;
-          let colCount = 0;
-          if (rowCount > 0) {
-            colCount = Object.keys(data[0]).length;
-          }
-
-          container
-            .append('p')
-            .text(`Tab A (ee48-w5t6):`);
-          container
-            .append('p')
-            .text(`Number of rows: ${rowCount}`);
-          container
-            .append('p')
-            .text(`Number of columns: ${colCount}`);
-        })
-        .catch(error => {
-          container
-            .append('p')
-            .style('color', 'red')
-            .text('Error loading Tab A data.');
-          console.error(error);
-        });
-    }
-
-    // Tab B: load vh55-3he6.json, count rows & columns
-    function loadTabB() {
-      const container = d3.select('#tabB');
-      container.html(''); // clear previous content
-
-      d3.json('https://data.cdc.gov/resource/vh55-3he6.json')
-        .then(data => {
-          const rowCount = data.length;
-          let colCount = 0;
-          if (rowCount > 0) {
-            colCount = Object.keys(data[0]).length;
-          }
-
-          container
-            .append('p')
-            .text(`Tab B (vh55-3he6):`);
-          container
-            .append('p')
-            .text(`Number of rows: ${rowCount}`);
-          container
-            .append('p')
-            .text(`Number of columns: ${colCount}`);
-        })
-        .catch(error => {
-          container
-            .append('p')
-            .style('color', 'red')
-            .text('Error loading Tab B data.');
-          console.error(error);
-        });
-    }
-
-    // Attach click listeners to tabs
-    d3.selectAll('.tab').on('click', function () {
-      const tabId = d3.select(this).attr('data-tab');
-      switchTab(tabId);
-    });
-
-    // Load Tab A by default on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadTabA();
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>

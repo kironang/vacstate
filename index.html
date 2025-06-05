@@ -2,115 +2,198 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>VacState – Unique Values</title>
-  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <title>VacState</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
+    /* Global font */
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
     }
-    h1 {
-      margin-bottom: 5px;
+
+    /* Header (10% of viewport height) */
+    #header {
+      height: 10vh;
+      width: 100vw;
+      background-color: #070353;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
-    #counts {
-      margin-bottom: 15px;
+    #title {
+      font-size: 2rem;
+      line-height: 1;
+    }
+    #tabs {
+      margin-top: 0.5rem;
+    }
+    .tab {
+      margin: 0 1rem;
+      cursor: pointer;
       font-size: 1rem;
-      color: #555;
+      user-select: none;
     }
-    .column-section {
-      margin-bottom: 25px;
+    .tab.active {
+      text-decoration: underline;
     }
-    .column-section h2 {
-      font-size: 1.1rem;
-      margin-bottom: 5px;
+
+    /* Content area (remaining 90% of viewport) */
+    #content {
+      height: 90vh;
+      padding: 1rem;
+      box-sizing: border-box;
     }
-    .column-section ul {
-      list-style: disc;
-      margin-left: 20px;
-      max-height: 200px;
-      overflow-y: auto;
-      padding-left: 0;
+    .tab-content {
+      display: none;
+      height: 100%;
+      overflow: auto;
     }
-    .column-section ul li {
-      padding: 2px 0;
-      font-size: 0.9rem;
+    .tab-content.active {
+      display: block;
     }
   </style>
 </head>
+
 <body>
-  <h1>VacState: Unique Values by Column</h1>
-  <div id="counts">Loading data and computing unique values...</div>
-  <div id="unique-values-container">
-    <!-- Unique values per column will be inserted here -->
+  <!-- Header Section -->
+  <div id="header">
+    <div id="title">VacState</div>
+    <div id="tabs">
+      <span class="tab active" data-tab="A">A</span>
+      <span class="tab" data-tab="B">B</span>
+      <span class="tab" data-tab="C">C</span>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div id="content">
+    <!-- Tab A Content -->
+    <div id="tabA" class="tab-content active">
+      <!-- D3 will load and print row/column count here -->
+      <p>Loading Tab A data...</p>
+    </div>
+
+    <!-- Tab B Content -->
+    <div id="tabB" class="tab-content">
+      <!-- D3 will load Tab B data here -->
+      <p>Loading Tab B data...</p>
+    </div>
+
+    <!-- Tab C Content -->
+    <div id="tabC" class="tab-content">
+      <h2>About the Data</h2>
+      <p>
+        This application visualizes adolescent vaccination coverage data
+        sourced from the CDC’s Socrata API endpoints. Tab A loads data from
+        <code>ee48-w5t6</code> (Vaccination Coverage among Adolescents
+        13–17 Years). Tab B will load a related dataset from
+        <code>vh55-3he6</code>. Future enhancements may include deeper analysis
+        and additional visualizations.
+      </p>
+      <h2>Author Information</h2>
+      <p>
+        Created by [Your Name]. For questions or feedback, contact:
+        <a href="mailto:youremail@example.com">youremail@example.com</a>.
+      </p>
+    </div>
   </div>
 
   <script>
-    // Replace $limit value if your dataset has more than 50,000 rows.
-    const endpoint = 'https://data.cdc.gov/resource/ee48-w5t6.json?$limit=50000';
+    // Helper: switch active tab
+    function switchTab(tabId) {
+      // Deactivate all tabs and contents
+      d3.selectAll('.tab').classed('active', false);
+      d3.selectAll('.tab-content').classed('active', false);
 
-    d3.json(endpoint).then(function(data) {
-      // If there is no data, show a message and return
-      if (!data || data.length === 0) {
-        d3.select('#counts').text('No data returned from the API.');
-        return;
+      // Activate selected tab and content
+      d3.select(`.tab[data-tab="${tabId}"]`).classed('active', true);
+      d3.select(`#tab${tabId}`).classed('active', true);
+
+      // Load data for A or B when clicked
+      if (tabId === 'A') {
+        loadTabA();
+      } else if (tabId === 'B') {
+        loadTabB();
       }
+      // Tab C is static
+    }
 
-      // Determine column names from the first object’s keys
-      const columns = Object.keys(data[0]);
+    // Tab A: load ee48-w5t6.json, count rows & columns
+    function loadTabA() {
+      const container = d3.select('#tabA');
+      container.html(''); // clear previous content
 
-      // Create a mapping from column name → Set of unique values
-      const uniqueValuesMap = {};
-      columns.forEach(col => {
-        uniqueValuesMap[col] = new Set();
-      });
+      d3.json('https://data.cdc.gov/resource/ee48-w5t6.json')
+        .then(data => {
+          const rowCount = data.length;
+          let colCount = 0;
+          if (rowCount > 0) {
+            colCount = Object.keys(data[0]).length;
+          }
 
-      // Populate each Set with values from every row
-      data.forEach(row => {
-        columns.forEach(col => {
-          // Use empty string if the field is missing or null/undefined
-          const val = row[col] != null ? String(row[col]) : '';
-          uniqueValuesMap[col].add(val);
+          container
+            .append('p')
+            .text(`Tab A (ee48-w5t6):`);
+          container
+            .append('p')
+            .text(`Number of rows: ${rowCount}`);
+          container
+            .append('p')
+            .text(`Number of columns: ${colCount}`);
+        })
+        .catch(error => {
+          container
+            .append('p')
+            .style('color', 'red')
+            .text('Error loading Tab A data.');
+          console.error(error);
         });
-      });
+    }
 
-      // Convert each Set into a sorted array (alphabetical order)
-      columns.forEach(col => {
-        const arr = Array.from(uniqueValuesMap[col]);
-        arr.sort((a, b) => a.localeCompare(b));
-        uniqueValuesMap[col] = arr;
-      });
+    // Tab B: load vh55-3he6.json, count rows & columns
+    function loadTabB() {
+      const container = d3.select('#tabB');
+      container.html(''); // clear previous content
 
-      // Update the counts header
-      const rowCount = data.length;
-      const colCount = columns.length;
-      d3.select('#counts')
-        .text(`Rows fetched: ${rowCount} | Columns: ${colCount} → Displaying unique values for each column`);
+      d3.json('https://data.cdc.gov/resource/vh55-3he6.json')
+        .then(data => {
+          const rowCount = data.length;
+          let colCount = 0;
+          if (rowCount > 0) {
+            colCount = Object.keys(data[0]).length;
+          }
 
-      // Select the container where we will insert each column's unique-values list
-      const container = d3.select('#unique-values-container');
+          container
+            .append('p')
+            .text(`Tab B (vh55-3he6):`);
+          container
+            .append('p')
+            .text(`Number of rows: ${rowCount}`);
+          container
+            .append('p')
+            .text(`Number of columns: ${colCount}`);
+        })
+        .catch(error => {
+          container
+            .append('p')
+            .style('color', 'red')
+            .text('Error loading Tab B data.');
+          console.error(error);
+        });
+    }
 
-      // For each column, append a section with the column name and a scrollable list of unique values
-      columns.forEach(col => {
-        const section = container.append('div')
-          .attr('class', 'column-section');
+    // Attach click listeners to tabs
+    d3.selectAll('.tab').on('click', function () {
+      const tabId = d3.select(this).attr('data-tab');
+      switchTab(tabId);
+    });
 
-        // Column name as a sub-heading
-        section.append('h2')
-          .text(col);
-
-        // Unordered list of unique values
-        const ul = section.append('ul');
-
-        ul.selectAll('li')
-          .data(uniqueValuesMap[col])
-          .enter()
-          .append('li')
-          .text(d => d === '' ? '(empty string)' : d);
-      });
-
-    }).catch(function(error) {
-      console.error('Error fetching data:', error);
-      d3.select('#counts').text('Error fetching data from the API.');
+    // Load Tab A by default on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTabA();
     });
   </script>
 </body>

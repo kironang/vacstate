@@ -2,68 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>VacState</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VacState Dashboard</title>
+  <!-- Montserrat for that crisp, modern feel -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
-
 <body>
-  <!-- HEADER (30% of viewport height) -->
-  <div id="header">
-    <!-- Title -->
-    <div id="title">VacState</div>
+  <!-- HEADER -->
+  <header id="header">
+    <div class="logo">VacState</div>
+    <nav class="nav-tabs">
+      <button class="tab-button active" data-tab="A">Adolescent Vacc.</button>
+      <button class="tab-button"        data-tab="B">Influenza</button>
+      <button class="tab-button"        data-tab="C">About</button>
+    </nav>
+  </header>
 
-    <!-- Tabs Row (A, B, C) -->
-    <div id="tabs">
-      <div class="tab active" data-tab="A">A</div>
-      <div class="tab" data-tab="B">B</div>
-      <div class="tab" data-tab="C">C</div>
+  <!-- HERO BANNER -->
+  <section id="hero">
+    <div class="hero-content">
+      <h1>Vaccination Coverage Across the U.S.</h1>
+      <p>Interactive insights into adolescent and influenza vaccine uptake.</p>
     </div>
-  </div>
+  </section>
 
-  <!-- CONTENT (remaining 70% of viewport height) -->
-  <div id="content">
-    <!-- Tab A -->
+  <!-- MAIN CONTENT -->
+  <main id="content">
+    <!-- Tab A: Adolescent Vaccination Bar Chart -->
     <div id="tabA" class="tab-content active">
-      <p>Loading Tab A data…</p>
+      <!-- chart injected by D3 -->
     </div>
 
-    <!-- Tab B -->
+    <!-- Tab B: Influenza Coverage Trend -->
     <div id="tabB" class="tab-content">
-      <p>Loading Tab B data…</p>
+      <!-- chart injected by D3 -->
     </div>
 
-    <!-- Tab C (static info + links) -->
+    <!-- Tab C: About & Sources -->
     <div id="tabC" class="tab-content">
-      <h2>About the Data</h2>
-      <p>
-        Tab A source (Vaccination Coverage among Adolescents 13–17 Years):<br />
-        <a href="https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6" target="_blank">
-          https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6
-        </a>
-      </p>
-      <p>
-        Tab B source (Influenza Vaccination Coverage for All Ages ≥ 6 Months):<br />
-        <a href="https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6" target="_blank">
-          https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6
-        </a>
-      </p>
-      <h2>Brand &amp; Style Guide</h2>
-      <p>
-        Waco-Texas Communications &amp; Marketing Brand Guide:<br />
-        <a href="https://www.waco-texas.com/Departments/Communications-Marketing/Brand-Guide" target="_blank">
-          https://www.waco-texas.com/Departments/Communications-Marketing/Brand-Guide
-        </a>
-      </p>
-      <h2>Author Information</h2>
-      <p>
-        Created by [Your Name].<br />
-        For questions or feedback, contact:
-        <a href="mailto:youremail@example.com">youremail@example.com</a>.
-      </p>
+      <div class="chart-card about-card">
+        <h2>About the Data</h2>
+        <p><strong>Adolescent Vaccination Coverage:</strong><br/>
+          Data from CDC: 
+          <a href="https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6" target="_blank">
+            ee48-w5t6
+          </a>
+        </p>
+        <p><strong>Influenza Vaccination Coverage:</strong><br/>
+          Data from CDC: 
+          <a href="https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6" target="_blank">
+            vh55-3he6
+          </a>
+        </p>
+        <h3>Design Inspiration</h3>
+        <p>Heavily influenced by Pantone’s pastel gradients, clean cards, and bold typography.</p>
+        <h3>Author</h3>
+        <p>Created by [Your Name].<br/>
+           <a href="mailto:youremail@example.com">youremail@example.com</a>
+        </p>
+      </div>
     </div>
-  </div>
+  </main>
 
+  <!-- D3 + Tab logic -->
   <script src="script.js"></script>
 </body>
 </html>

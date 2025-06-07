@@ -1,153 +1,171 @@
-// -------------------------------
-// Helper: Switch active tab
-// -------------------------------
-function switchTab(tabId) {
-  // Remove “active” class from all tabs & contents
-  d3.selectAll('.tab').classed('active', false);
-  d3.selectAll('.tab-content').classed('active', false);
+// CDC Socrata endpoints
+const ENDPOINTS = {
+  A: "https://data.cdc.gov/resource/ee48-w5t6.csv?$limit=50000",
+  B: "https://data.cdc.gov/resource/vh55-3he6.csv?$limit=50000"
+};
 
-  // Add “active” class to the clicked tab and corresponding content
-  d3.select(`.tab[data-tab="${tabId}"]`).classed('active', true);
-  d3.select(`#tab${tabId}`).classed('active', true);
+document.addEventListener("DOMContentLoaded", () => {
+  // Tab click behavior
+  const tabs = d3.selectAll(".tab-button");
+  tabs.on("click", function(event) {
+    const sel = d3.select(this).attr("data-tab");
 
-  // If tab A or B is clicked, (re)load its data
-  if (tabId === 'A') {
-    loadTabA();
-  } else if (tabId === 'B') {
-    loadTabB();
-  }
-  // Tab C is static, no data fetch necessary
-}
+    // update button active state
+    tabs.classed("active", d => false);
+    d3.select(this).classed("active", true);
 
-// -------------------------------
-// Tab A: “ee48-w5t6”
-// - Limit to 30,000 rows
-// - Compute all unique values per column
-// -------------------------------
-function loadTabA() {
-  const container = d3.select('#tabA');
-  container.html(''); // Clear previous content
+    // show/hide content
+    d3.selectAll(".tab-content").classed("active", false);
+    d3.select(`#tab${sel}`).classed("active", true);
 
-  // Show a loading message
-  container.append('p').text('Fetching Tab A data…');
+    // lazy‐load charts
+    if (sel === "A" && !d3.select("#tabA svg").node()) drawChartA();
+    if (sel === "B" && !d3.select("#tabB svg").node()) drawChartB();
+  });
 
-  // Socrata API endpoint with $limit=30000
-  const urlA = 'https://data.cdc.gov/resource/ee48-w5t6.json?$limit=30000';
-
-  d3.json(urlA)
-    .then(data => {
-      container.html(''); // Clear loading message
-
-      const rowCount = data.length;
-      // If at least one row, grab all column keys
-      const colKeys = rowCount > 0
-        ? Object.keys(data[0])
-        : [];
-      const colCount = colKeys.length;
-
-      // Display basic info
-      container.append('p').text('Tab A (ee48-w5t6):');
-      container.append('p').text(`Number of rows (up to 30,000): ${rowCount}`);
-      container.append('p').text(`Number of columns: ${colCount}`);
-
-      // If there are columns, compute & display unique values per column
-      if (colCount > 0) {
-        container.append('p').text('Unique values per column:');
-        colKeys.forEach(key => {
-          // Build a Set of unique values (skip undefined/null)
-          const uniquesSet = new Set();
-          data.forEach(row => {
-            if (row[key] !== undefined && row[key] !== null) {
-              uniquesSet.add(row[key]);
-            }
-          });
-          const uniquesArr = Array.from(uniquesSet).sort();
-
-          // Place each column + its unique values in a <p>
-          container
-            .append('p')
-            .text(`${key}: ${uniquesArr.join(', ')}`);
-        });
-      }
-    })
-    .catch(error => {
-      container.html('');
-      container.append('p')
-        .style('color', 'red')
-        .text('Error loading Tab A data.');
-      console.error(error);
-    });
-}
-
-// -------------------------------
-// Tab B: “vh55-3he6”
-// - Simply request all fields (including population_sample_size) with $limit=300000
-// - Compute all unique values per column
-// -------------------------------
-function loadTabB() {
-  const container = d3.select('#tabB');
-  container.html(''); // Clear previous content
-
-  container.append('p').text('Fetching Tab B data…');
-
-  // By default, “population_sample_size” is included in each record.
-  // Just use $limit=300000 to retrieve up to 300k rows.
-  const urlB = 'https://data.cdc.gov/resource/vh55-3he6.json?$limit=300000';
-
-  d3.json(urlB)
-    .then(data => {
-      container.html(''); // Clear loading message
-
-      const rowCount = data.length;
-      const colKeys = rowCount > 0
-        ? Object.keys(data[0])
-        : [];
-      const colCount = colKeys.length;
-
-      // Display basic info
-      container.append('p').text('Tab B (vh55-3he6):');
-      container.append('p').text(`Number of rows (up to 300,000): ${rowCount}`);
-      container.append('p').text(`Number of columns: ${colCount}`);
-
-      // If there are columns, compute & display unique values per column
-      if (colCount > 0) {
-        container.append('p').text('Unique values per column:');
-        colKeys.forEach(key => {
-          const uniquesSet = new Set();
-          data.forEach(row => {
-            if (row[key] !== undefined && row[key] !== null) {
-              uniquesSet.add(row[key]);
-            }
-          });
-          const uniquesArr = Array.from(uniquesSet).sort();
-
-          // Place each column + its unique values in a <p>
-          container
-            .append('p')
-            .text(`${key}: ${uniquesArr.join(', ')}`);
-        });
-      }
-    })
-    .catch(error => {
-      container.html('');
-      container.append('p')
-        .style('color', 'red')
-        .text('Error loading Tab B data.');
-      console.error(error);
-    });
-}
-
-// -------------------------------
-// Attach click listeners to tabs
-// -------------------------------
-d3.selectAll('.tab').on('click', function() {
-  const tabId = d3.select(this).attr('data-tab');
-  switchTab(tabId);
+  // draw default tab
+  drawChartA();
 });
 
-// -------------------------------
-// On initial load, show Tab A
-// -------------------------------
-document.addEventListener('DOMContentLoaded', () => {
-  loadTabA();
-});
+
+function drawChartA() {
+  const container = d3.select("#tabA")
+    .append("div")
+      .attr("class","chart-card");
+
+  const svg = container.append("svg")
+      .attr("width","100%")
+      .attr("height",400);
+
+  const margin = { top:20, right:30, bottom:40, left:60 };
+  const width  = container.node().clientWidth - margin.left - margin.right;
+  const height = +svg.attr("height") - margin.top - margin.bottom;
+
+  const g = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  d3.csv(ENDPOINTS.A).then(data => {
+    // parse & aggregate
+    const parseVal = d => +d.coverage_percent_estimate;
+    const byState = Array.from(
+      d3.group(data, d => d.locationabbr),
+      ([st, recs]) => ({
+        state: st,
+        value: d3.max(recs, parseVal)
+      })
+    ).sort((a,b) => b.value - a.value);
+
+    // scales
+    const x = d3.scaleLinear()
+      .domain([0, d3.max(byState, d=>d.value)]).nice()
+      .range([0, width]);
+
+    const y = d3.scaleBand()
+      .domain(byState.map(d=>d.state))
+      .range([0, height])
+      .padding(0.1);
+
+    // bars
+    g.selectAll("rect")
+      .data(byState)
+      .join("rect")
+        .attr("x", 0)
+        .attr("y", d => y(d.state))
+        .attr("width", d => x(d.value))
+        .attr("height", y.bandwidth())
+        .attr("fill", "#070353");
+
+    // axes
+    g.append("g").call(d3.axisLeft(y));
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x).ticks(5).tickFormat(d => d + "%"));
+
+    // labels
+    g.append("text")
+      .attr("x", width/2)
+      .attr("y", height + margin.bottom - 5)
+      .attr("text-anchor","middle")
+      .text("Coverage (%)");
+
+    g.append("text")
+      .attr("x", -margin.left)
+      .attr("y", -10)
+      .attr("font-size","1.2rem")
+      .attr("font-weight","600")
+      .text("Adolescent Vaccination Coverage by State");
+  });
+}
+
+
+function drawChartB() {
+  const container = d3.select("#tabB")
+    .append("div")
+      .attr("class","chart-card");
+
+  const svg = container.append("svg")
+      .attr("width","100%")
+      .attr("height",400);
+
+  const margin = { top:20, right:30, bottom:40, left:60 };
+  const width  = container.node().clientWidth - margin.left - margin.right;
+  const height = +svg.attr("height") - margin.top - margin.bottom;
+
+  const g = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  d3.csv(ENDPOINTS.B).then(data => {
+    // parse & roll up by season
+    const parseVal = d => +d.coverage;
+    const bySeason = Array.from(
+      d3.rollup(data, v => d3.mean(v, parseVal), d => d.season),
+      ([season, val]) => ({ season, value: val })
+    ).sort((a,b) => a.season.localeCompare(b.season));
+
+    // scales
+    const x = d3.scalePoint()
+      .domain(bySeason.map(d=>d.season))
+      .range([0, width]);
+
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(bySeason, d=>d.value)]).nice()
+      .range([height, 0]);
+
+    // line
+    g.append("path")
+      .datum(bySeason)
+      .attr("fill","none")
+      .attr("stroke","#070353")
+      .attr("stroke-width",2)
+      .attr("d", d3.line()
+        .x(d => x(d.season))
+        .y(d => y(d.value))
+      );
+
+    // axes
+    g.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+        .attr("font-size","0.9rem")
+        .attr("transform","rotate(-40)")
+        .attr("text-anchor","end");
+
+    g.append("g")
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d => d + "%"));
+
+    // labels
+    g.append("text")
+      .attr("x", width/2)
+      .attr("y", height + margin.bottom - 5)
+      .attr("text-anchor","middle")
+      .text("Season");
+
+    g.append("text")
+      .attr("x", -margin.left)
+      .attr("y", -10)
+      .attr("font-size","1.2rem")
+      .attr("font-weight","600")
+      .text("Influenza Vaccination Coverage Trend");
+  });
+}

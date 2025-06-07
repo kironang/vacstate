@@ -1,173 +1,177 @@
-// ————————————————— DATA ENDPOINTS —————————————————
-const ENDPOINTS = {
-  A: "https://data.cdc.gov/resource/ee48-w5t6.csv?$limit=1000000000",
-  B: "https://data.cdc.gov/resource/vh55-3he6.csv?$limit=1000000000"
-};
+// ──────────────────────────────────────────────
+//  Fetch + render one vaccine at a time from Socrata
+// ──────────────────────────────────────────────
+const ENDPOINT = 'https://data.cdc.gov/resource/ee48-w5t6.json?$limit=100000';
+const VACCINES = [
+  'HPV',
+  'Tetanus',
+  'Varicella',
+  '≥1 Dose MenACWY',
+  '≥2 Doses Hep A',
+  '≥2 Doses MMR',
+  '≥3 Doses HepB'
+];
 
-// ————————————————— DYNAMIC SUBTITLES —————————————————
-const SUBTITLES = {
-  A: "Filter & explore adolescent vaccination dataset.",
-  B: "Filter & explore influenza vaccination dataset.",
-  C: "About the dashboard & data sources."
-};
+let currentVaccine = VACCINES[0];
+let allData        = [];
+let filteredData   = [];
+let activeFilters  = {};
 
-// state holders
-const originalData = {};
-const currentFilters = {};
-const summaryDivs    = {};
-const tableDivs      = {};
+// 1) Fetch raw JSON for a vaccine
+async function fetchData(vaccine) {
+  const url = `${ENDPOINT}&vaccine=${encodeURIComponent(vaccine)}`;
+  const res = await fetch(url);
+  return await res.json();
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-  const tabs = d3.selectAll(".tab-button");
+// 2) Build a map of unique values for each field
+function computeUniqueMap(data) {
+  if (!data.length) return {};
+  return Object.keys(data[0])
+    .filter(k => k !== 'vaccine')
+    .reduce((map, k) => {
+      map[k] = Array.from(new Set(data.map(d => d[k]))).filter(Boolean).sort();
+      return map;
+    }, {});
+}
 
-  // Tab click handler
-  tabs.on("click", function() {
-    const sel = d3.select(this).attr("data-tab");
+// 3) Update the page title
+function renderPageTitle() {
+  document.getElementById('pageTitle').textContent =
+    `${currentVaccine} Coverage`;
+}
 
-    // 1) Active button
-    tabs.classed("active", false);
-    d3.select(this).classed("active", true);
+// 4) Render all checkbox filters (and wire up dynamic show/hide)
+function renderFilters() {
+  const container = document.getElementById('filters');
+  container.innerHTML = '';
 
-    // 2) Show correct pane
-    d3.selectAll(".tab-content").classed("active", false);
-    d3.select(`#tab${sel}`).classed("active", true);
+  // decide which dataset drives available values
+  const source = filteredData.length ? filteredData : allData;
+  const uniques = computeUniqueMap(source);
 
-    // 3) Update subtitle
-    d3.select("#subtitle").text(SUBTITLES[sel]);
+  Object.entries(uniques).forEach(([key, vals]) => {
+    const group = document.createElement('div');
+    group.className = 'filter-group';
 
-    // 4) If data‐tab and not yet initialized, fetch & build UI
-    if ((sel === "A" || sel === "B") && !originalData[sel]) {
-      initTab(sel);
-    }
-  });
+    const title = document.createElement('h3');
+    title.textContent = key;
+    group.appendChild(title);
 
-  // Initial load: Tab A
-  d3.select("#subtitle").text(SUBTITLES.A);
-  initTab("A");
-});
+    vals.forEach(v => {
+      const id = `chk_${key}_${v}`.replace(/\s+/g, '_');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = id;
+      cb.dataset.key = key;
+      cb.value = v;
+      cb.checked = activeFilters[key]?.includes(v) ?? true;
+      cb.addEventListener('change', onFilterChange);
 
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      label.textContent = v;
 
-/**
- * Fetches CSV, sets up filters, summary & unique‐table for a tab
- */
-function initTab(sel) {
-  d3.csv(ENDPOINTS[sel]).then(data => {
-    originalData[sel] = data;
-    const cols = Object.keys(data[0] || {});
-    // initialize filter sets
-    currentFilters[sel] = {};
-    const uniqueMap = {};
-    cols.forEach(col => {
-      const values = Array.from(new Set(data.map(d => d[col]))).sort();
-      uniqueMap[col] = values;
-      currentFilters[sel][col] = new Set(values);
+      group.appendChild(cb);
+      group.appendChild(label);
     });
 
-    const container = d3.select(`#tab${sel}`);
-
-    // 1) Build filter panel
-    buildFilterPanel(sel, cols, uniqueMap, container);
-
-    // 2) Create summary & table containers
-    summaryDivs[sel] = container.append("div")
-      .attr("class", "chart-card summary");
-
-    tableDivs[sel] = container.append("div")
-      .attr("class", "chart-card unique-table");
-
-    // 3) Initial render
-    updateView(sel);
+    container.appendChild(group);
   });
 }
 
-/**
- * Renders the filter checkboxes for each column
- */
-function buildFilterPanel(sel, cols, uniqueMap, container) {
-  const panel = container.append("div")
-    .attr("class", "chart-card filter-panel");
+// 5) Handle one checkbox toggle
+function onFilterChange(e) {
+  const { key, value } = e.target.dataset;
 
-  cols.forEach(col => {
-    const colDiv = panel.append("div");
-    colDiv.append("h3").text(col);
+  // ensure an array exists
+  if (!activeFilters[key]) {
+    activeFilters[key] = computeUniqueMap(allData)[key].slice();
+  }
 
-    const list = colDiv.append("div")
-      .attr("class", "checkbox-list");
+  if (e.target.checked) {
+    activeFilters[key].push(value);
+  } else {
+    activeFilters[key] = activeFilters[key].filter(x => x !== value);
+  }
 
-    uniqueMap[col].forEach((val, i) => {
-      const checkboxId = `chk_${sel}_${col}_${i}`;
-
-      const item = list.append("div")
-        .attr("class", "checkbox-item");
-
-      item.append("input")
-        .attr("type", "checkbox")
-        .attr("id", checkboxId)
-        .property("checked", true)
-        .on("change", function() {
-          if (this.checked) {
-            currentFilters[sel][col].add(val);
-          } else {
-            currentFilters[sel][col].delete(val);
-          }
-          updateView(sel);
-        });
-
-      item.append("label")
-        .attr("for", checkboxId)
-        .text(val);
-    });
-  });
-}
-
-/**
- * Applies filters, then updates the summary & the unique‐values table
- */
-function updateView(sel) {
-  const data     = originalData[sel];
-  const filters  = currentFilters[sel];
-  const cols     = Object.keys(filters);
-
-  // 1) filter rows
-  const filtered = data.filter(d =>
-    cols.every(col => filters[col].has(d[col]))
+  // apply all activeFilters
+  filteredData = allData.filter(row =>
+    Object.entries(activeFilters).every(([k, allowed]) =>
+      !allowed.length || allowed.includes(row[k])
+    )
   );
 
-  // 2) update summary
-  const sumDiv = summaryDivs[sel];
-  sumDiv.html("");
-  sumDiv.append("p").text(`Rows: ${filtered.length}`);
-  sumDiv.append("p").text(`Columns: ${cols.length}`);
+  // re-render UI off the filtered set
+  renderFilters();
+  renderUniques();
+}
 
-  // 3) update unique‐values table
-  const tblDiv = tableDivs[sel];
-  tblDiv.html("");
-  tblDiv.append("h2").text("Unique Values by Column");
+// 6) Render the unique-values table
+function renderUniques() {
+  const container = document.getElementById('uniqueTable');
+  container.innerHTML = '';
 
-  const table = tblDiv.append("table");
-  const thead = table.append("thead");
-  const tbody = table.append("tbody");
+  const source = filteredData.length ? filteredData : allData;
+  const uniques = computeUniqueMap(source);
 
-  // header
-  thead.append("tr")
-    .selectAll("th")
-    .data(["Column", "Unique Values"])
-    .join("th")
-      .text(d => d);
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  ['Column', 'Unique Values'].forEach(txt => {
+    const th = document.createElement('th');
+    th.textContent = txt;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
 
-  // compute uniques on filtered data
-  const uniques = cols.map(col => {
-    return {
-      col,
-      values: Array.from(new Set(filtered.map(d => d[col]))).sort()
-    };
+  const tbody = document.createElement('tbody');
+  Object.entries(uniques).forEach(([col, vals]) => {
+    const tr = document.createElement('tr');
+    const tdCol = document.createElement('td');
+    tdCol.textContent = col;
+    const tdVals = document.createElement('td');
+    tdVals.textContent = vals.join(', ');
+    tr.appendChild(tdCol);
+    tr.appendChild(tdVals);
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+
+  container.appendChild(table);
+}
+
+// 7) Load data + initialize filters & table
+async function loadAndRender() {
+  allData = await fetchData(currentVaccine);
+  const uniques = computeUniqueMap(allData);
+
+  // start with "all values" checked
+  activeFilters = Object.fromEntries(
+    Object.entries(uniques).map(([k, arr]) => [k, arr.slice()])
+  );
+  filteredData = [];
+
+  renderPageTitle();
+  renderFilters();
+  renderUniques();
+}
+
+// 8) Wire up the main tabs & kick it off
+document.addEventListener('DOMContentLoaded', () => {
+  const tabs = document.querySelectorAll('#mainTabs .tab-button');
+  tabs.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabs.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentVaccine = btn.dataset.vaccine;
+      loadAndRender();
+    });
   });
 
-  // rows
-  const rows = tbody.selectAll("tr")
-    .data(uniques)
-    .join("tr");
-
-  rows.append("td").text(d => d.col);
-  rows.append("td").text(d => d.values.join(", "));
-}
+  // initial load
+  currentVaccine =
+    document.querySelector('#mainTabs .tab-button.active').dataset.vaccine;
+  loadAndRender();
+});

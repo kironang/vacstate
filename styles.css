@@ -15,26 +15,23 @@
 
 body {
   font-family: 'Montserrat', sans-serif;
-  background: var(--lightgray);
   color: var(--primary);
-  line-height: 1.5;
+  background: var(--lightgray);
 }
 
-/* ————————————— HEADER (TABS) ————————————— */
+/* ─── HEADER & NAV ─── */
 header#header {
   position: sticky;
   top: 0;
   background: var(--white);
-  border-bottom: 4px solid var(--pink);
-  z-index: 100;
-  display: flex;
-  justify-content: center;
-  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  z-index: 1000;
 }
 
 .nav-tabs {
   display: flex;
-  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .tab-button {
@@ -42,21 +39,25 @@ header#header {
   border: none;
   font-size: 1rem;
   font-weight: 600;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
   cursor: pointer;
   border-bottom: 3px solid transparent;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, color 0.3s;
 }
 
-.tab-button.active,
-.tab-button:hover {
-  border-color: var(--primary);
+.tab-button.active {
   color: var(--primary);
+  border-color: var(--primary);
 }
 
-/* ————————————— HERO ————————————— */
+/* ─── HERO BANNER ─── */
 #hero {
-  background: linear-gradient(135deg, var(--pink), var(--beige), var(--teal));
+  background: linear-gradient(
+    135deg,
+    var(--pink),
+    var(--beige),
+    var(--teal)
+  );
   text-align: center;
   padding: 4rem 2rem 6rem;
 }
@@ -70,102 +71,74 @@ header#header {
 #hero h2#subtitle {
   font-size: 1.2rem;
   font-weight: 400;
+  color: #333;
 }
 
-/* ————————————— CONTENT & CARDS ————————————— */
+/* ─── MAIN CONTENT ─── */
 main#content {
   padding: 2rem;
-  display: grid;
-  row-gap: 2rem;
 }
 
-.tab-content {
-  display: none;
-  opacity: 0;
-  transition: opacity 0.3s;
+#pageTitle {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
 }
 
-.tab-content.active {
-  display: block;
-  opacity: 1;
-}
-
-/* Base card style */
-.chart-card {
-  background: var(--white);
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-/* ————— Filter Panel ————— */
-.filter-panel {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+/* ─── FILTER GROUPS ─── */
+#filters {
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
-.filter-panel h3 {
+.filter-group {
+  background: var(--white);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  padding: 1rem;
+  flex: 1 1 200px;
+}
+
+.filter-group h3 {
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
+  color: var(--primary);
 }
 
-.filter-panel .checkbox-list {
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 0.5rem;
-  border: 1px solid #eee;
-  border-radius: 0.5rem;
-  background: var(--white);
-}
-
-.filter-panel .checkbox-item {
-  display: flex;
-  align-items: center;
+.filter-group label {
+  display: block;
   margin-bottom: 0.25rem;
+  cursor: pointer;
 }
 
-.filter-panel input[type="checkbox"] {
-  margin-right: 0.5rem;
-}
-
-/* ————— Summary (Rows/Cols) ————— */
-.summary p {
-  font-size: 1rem;
-  margin-bottom: 0.5rem;
-}
-
-/* ————— Unique‐Values Table ————— */
-.unique-table {
+/* ─── UNIQUE VALUES TABLE ─── */
+#uniqueTable {
   overflow-x: auto;
 }
 
-.unique-table table {
+#uniqueTable table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.unique-table th,
-.unique-table td {
+#uniqueTable th,
+#uniqueTable td {
+  border: 1px solid #eee;
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
   font-size: 0.9rem;
 }
 
-.unique-table th {
-  font-weight: 600;
+#uniqueTable th {
   background: var(--lightgray);
+  font-weight: 600;
 }
 
-/* ————— RESPONSIVE ————— */
+/* ─── RESPONSIVE ─── */
 @media (min-width: 768px) {
-  main#content {
-    max-width: 900px;
-    margin: 0 auto;
-  }
   #hero h1#mainTitle {
     font-size: 4rem;
   }

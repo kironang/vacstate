@@ -20,7 +20,7 @@ body {
   line-height: 1.5;
 }
 
-/* ————————————————————— HEADER (TABS) ————————————————————— */
+/* ————————————— HEADER (TABS) ————————————— */
 header#header {
   position: sticky;
   top: 0;
@@ -54,7 +54,7 @@ header#header {
   color: var(--primary);
 }
 
-/* ————————————————————————— HERO ————————————————————————— */
+/* ————————————— HERO ————————————— */
 #hero {
   background: linear-gradient(135deg, var(--pink), var(--beige), var(--teal));
   text-align: center;
@@ -72,7 +72,7 @@ header#header {
   font-weight: 400;
 }
 
-/* ————————————————————— CONTENT & CARDS ————————————————————— */
+/* ————————————— CONTENT & CARDS ————————————— */
 main#content {
   padding: 2rem;
   display: grid;
@@ -90,6 +90,7 @@ main#content {
   opacity: 1;
 }
 
+/* Base card style */
 .chart-card {
   background: var(--white);
   padding: 1.5rem;
@@ -97,14 +98,55 @@ main#content {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* UNIQUE-VALUES TABLE */
-.unique-table {
-  margin-top: 1rem;
+/* ————— Filter Panel ————— */
+.filter-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
+
+.filter-panel h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.filter-panel .checkbox-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border: 1px solid #eee;
+  border-radius: 0.5rem;
+  background: var(--white);
+}
+
+.filter-panel .checkbox-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.filter-panel input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
+/* ————— Summary (Rows/Cols) ————— */
+.summary p {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ————— Unique‐Values Table ————— */
+.unique-table {
+  overflow-x: auto;
+}
+
 .unique-table table {
   width: 100%;
   border-collapse: collapse;
 }
+
 .unique-table th,
 .unique-table td {
   padding: 0.75rem;
@@ -112,12 +154,13 @@ main#content {
   border-bottom: 1px solid #eee;
   font-size: 0.9rem;
 }
+
 .unique-table th {
   font-weight: 600;
   background: var(--lightgray);
 }
 
-/* RESPONSIVE */
+/* ————— RESPONSIVE ————— */
 @media (min-width: 768px) {
   main#content {
     max-width: 900px;

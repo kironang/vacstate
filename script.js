@@ -1,7 +1,7 @@
 // ————————————————— DATA ENDPOINTS —————————————————
 const ENDPOINTS = {
-  A: "https://data.cdc.gov/resource/ee48-w5t6.csv?$limit=50000",
-  B: "https://data.cdc.gov/resource/vh55-3he6.csv?$limit=50000"
+  A: "https://data.cdc.gov/resource/ee48-w5t6.csv?$limit=1000000000",
+  B: "https://data.cdc.gov/resource/vh55-3he6.csv?$limit=1000000000"
 };
 
 // ————————————————— DYNAMIC SUBTITLES —————————————————

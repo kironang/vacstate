@@ -1,8 +1,9 @@
-// ──────────────────────────────────────────────
-//  Fetch + render one vaccine at a time from Socrata
-// ──────────────────────────────────────────────
-const ENDPOINT = 'https://data.cdc.gov/resource/ee48-w5t6.json?$limit=100000';
-const VACCINES = [
+// —────────────────────────────────────────────────
+//   CONFIG & STATE
+// —────────────────────────────────────────────────
+const ADOL_ENDPOINT = 'https://data.cdc.gov/resource/ee48-w5t6.json?$limit=100000';
+const FLU_ENDPOINT  = 'https://data.cdc.gov/resource/vh55-3he6.json?$limit=100000';
+const ADOL_VACCINES = [
   'HPV',
   'Tetanus',
   'Varicella',
@@ -11,66 +12,83 @@ const VACCINES = [
   '≥2 Doses MMR',
   '≥3 Doses HepB'
 ];
+const SKIP_COLUMNS  = ['coverage_estimate', '_95_ci'];
 
-let currentVaccine = VACCINES[0];
-let allData        = [];
-let filteredData   = [];
-let activeFilters  = {};
+let allData       = [];
+let filteredData  = [];
+let activeFilters = {};
+let currentMode   = 'adolescent';   // 'adolescent' | 'influenza' | 'about'
+let currentVaccine = ADOL_VACCINES[0];
 
-// 1) Fetch raw JSON for a vaccine
-async function fetchData(vaccine) {
-  const url = `${ENDPOINT}&vaccine=${encodeURIComponent(vaccine)}`;
+
+// —────────────────────────────────────────────────
+//   FETCH FUNCTIONS
+// —────────────────────────────────────────────────
+async function fetchAdol(vaccine) {
+  const url = `${ADOL_ENDPOINT}&vaccine=${encodeURIComponent(vaccine)}`;
   const res = await fetch(url);
-  return await res.json();
+  return res.json();
 }
 
-// 2) Build a map of unique values for each field
+async function fetchFlu() {
+  const res = await fetch(FLU_ENDPOINT);
+  return res.json();
+}
+
+
+// —────────────────────────────────────────────────
+//   UTILS: UNIQUE VALUE MAP (EXCLUDING SKIPPED)
+// —────────────────────────────────────────────────
 function computeUniqueMap(data) {
-  if (!data.length) return {};
-  return Object.keys(data[0])
-    .filter(k => k !== 'vaccine')
-    .reduce((map, k) => {
-      map[k] = Array.from(new Set(data.map(d => d[k]))).filter(Boolean).sort();
-      return map;
-    }, {});
+  const map = {};
+  if (!data.length) return map;
+  Object.keys(data[0]).forEach(key => {
+    if (key === 'vaccine' || SKIP_COLUMNS.includes(key)) return;
+    const vals = Array.from(new Set(data.map(d => d[key]))).filter(Boolean).sort();
+    map[key] = vals;
+  });
+  return map;
 }
 
-// 3) Update the page title
-function renderPageTitle() {
-  document.getElementById('pageTitle').textContent =
-    `${currentVaccine} Coverage`;
-}
 
-// 4) Render all checkbox filters (and wire up dynamic show/hide)
+// —────────────────────────────────────────────────
+//   RENDER FILTERS PANEL
+// —────────────────────────────────────────────────
 function renderFilters() {
   const container = document.getElementById('filters');
   container.innerHTML = '';
 
-  // decide which dataset drives available values
+  // choose full or filtered
   const source = filteredData.length ? filteredData : allData;
-  const uniques = computeUniqueMap(source);
+  const uniqueMap = computeUniqueMap(source);
 
-  Object.entries(uniques).forEach(([key, vals]) => {
+  // seed empty activeFilters with “all”
+  Object.entries(uniqueMap).forEach(([key, vals]) => {
+    if (!activeFilters[key]) activeFilters[key] = [...vals];
+  });
+
+  // build one group per column
+  Object.entries(uniqueMap).forEach(([key, vals]) => {
     const group = document.createElement('div');
     group.className = 'filter-group';
 
-    const title = document.createElement('h3');
-    title.textContent = key;
-    group.appendChild(title);
+    const h3 = document.createElement('h3');
+    h3.textContent = key;
+    group.appendChild(h3);
 
-    vals.forEach(v => {
-      const id = `chk_${key}_${v}`.replace(/\s+/g, '_');
+    vals.forEach(val => {
+      const id = `chk_${key}_${val}`.replace(/\s+/g,'_');
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.id = id;
       cb.dataset.key = key;
-      cb.value = v;
-      cb.checked = activeFilters[key]?.includes(v) ?? true;
+      cb.value = val;
+      cb.checked = activeFilters[key].includes(val);
       cb.addEventListener('change', onFilterChange);
 
       const label = document.createElement('label');
       label.htmlFor = id;
-      label.textContent = v;
+      label.textContent = val;
 
       group.appendChild(cb);
       group.appendChild(label);
@@ -80,40 +98,35 @@ function renderFilters() {
   });
 }
 
-// 5) Handle one checkbox toggle
 function onFilterChange(e) {
   const { key, value } = e.target.dataset;
-
-  // ensure an array exists
-  if (!activeFilters[key]) {
-    activeFilters[key] = computeUniqueMap(allData)[key].slice();
-  }
-
   if (e.target.checked) {
     activeFilters[key].push(value);
   } else {
-    activeFilters[key] = activeFilters[key].filter(x => x !== value);
+    activeFilters[key] = activeFilters[key].filter(v => v !== value);
   }
+  applyFilters();
+}
 
-  // apply all activeFilters
+function applyFilters() {
   filteredData = allData.filter(row =>
-    Object.entries(activeFilters).every(([k, allowed]) =>
-      !allowed.length || allowed.includes(row[k])
-    )
+    Object.entries(activeFilters).every(([k, arr]) => arr.includes(row[k]))
   );
-
-  // re-render UI off the filtered set
   renderFilters();
   renderUniques();
 }
 
-// 6) Render the unique-values table
+
+// —────────────────────────────────────────────────
+//   RENDER UNIQUE‐VALUES TABLE
+// —────────────────────────────────────────────────
 function renderUniques() {
   const container = document.getElementById('uniqueTable');
   container.innerHTML = '';
 
+  // choose full or filtered
   const source = filteredData.length ? filteredData : allData;
-  const uniques = computeUniqueMap(source);
+  const uniqueMap = computeUniqueMap(source);
 
   const table = document.createElement('table');
   const thead = document.createElement('thead');
@@ -127,7 +140,7 @@ function renderUniques() {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  Object.entries(uniques).forEach(([col, vals]) => {
+  Object.entries(uniqueMap).forEach(([col, vals]) => {
     const tr = document.createElement('tr');
     const tdCol = document.createElement('td');
     tdCol.textContent = col;
@@ -142,36 +155,64 @@ function renderUniques() {
   container.appendChild(table);
 }
 
-// 7) Load data + initialize filters & table
-async function loadAndRender() {
-  allData = await fetchData(currentVaccine);
-  const uniques = computeUniqueMap(allData);
 
-  // start with "all values" checked
-  activeFilters = Object.fromEntries(
-    Object.entries(uniques).map(([k, arr]) => [k, arr.slice()])
-  );
-  filteredData = [];
+// —────────────────────────────────────────────────
+//   TAB SWITCHING & INITIALIZATION
+// —────────────────────────────────────────────────
+async function switchTab(mode, vaccine) {
+  currentMode = mode;
 
-  renderPageTitle();
+  // show/hide About pane
+  document.getElementById('aboutContent').hidden = (mode !== 'about');
+  // show/hide filters + uniques
+  document.getElementById('filters').style.display    = (mode === 'about' ? 'none' : '');
+  document.getElementById('uniqueTable').style.display = (mode === 'about' ? 'none' : '');
+
+  if (mode === 'about') {
+    document.getElementById('subtitle').textContent = 'About the dashboard & data sources.';
+    document.getElementById('pageTitle').textContent = '';
+    return;
+  }
+
+  // update subtitles & titles
+  document.getElementById('subtitle').textContent =
+    mode === 'adolescent'
+      ? 'Filter & explore adolescent vaccination dataset.'
+      : 'Filter & explore influenza vaccination dataset.';
+  document.getElementById('pageTitle').textContent =
+    mode === 'adolescent'
+      ? `${vaccine} Coverage`
+      : 'Influenza Coverage';
+
+  // fetch the right data
+  if (mode === 'adolescent') {
+    currentVaccine = vaccine;
+    allData = await fetchAdol(vaccine);
+  } else {
+    allData = await fetchFlu();
+  }
+
+  // reset filters & table
+  filteredData  = [];
+  activeFilters = {};
   renderFilters();
   renderUniques();
 }
 
-// 8) Wire up the main tabs & kick it off
-document.addEventListener('DOMContentLoaded', () => {
+function initTabs() {
   const tabs = document.querySelectorAll('#mainTabs .tab-button');
   tabs.forEach(btn => {
     btn.addEventListener('click', () => {
       tabs.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      currentVaccine = btn.dataset.vaccine;
-      loadAndRender();
+      const mode    = btn.dataset.mode;
+      const vaccine = btn.dataset.vaccine;
+      switchTab(mode, vaccine);
     });
   });
 
-  // initial load
-  currentVaccine =
-    document.querySelector('#mainTabs .tab-button.active').dataset.vaccine;
-  loadAndRender();
-});
+  // kick-off default
+  switchTab('adolescent', currentVaccine);
+}
+
+document.addEventListener('DOMContentLoaded', initTabs);

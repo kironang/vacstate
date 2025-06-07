@@ -20,28 +20,21 @@ body {
   line-height: 1.5;
 }
 
-/* HEADER */
+/* ————————————————————— HEADER (TABS) ————————————————————— */
 header#header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: var(--white);
-  border-bottom: 4px solid var(--pink);
   position: sticky;
   top: 0;
+  background: var(--white);
+  border-bottom: 4px solid var(--pink);
   z-index: 100;
-}
-
-.logo {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: var(--primary);
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
 }
 
 .nav-tabs {
   display: flex;
-  gap: 1rem;
+  gap: 2rem;
 }
 
 .tab-button {
@@ -52,7 +45,7 @@ header#header {
   padding: 0.5rem 1rem;
   cursor: pointer;
   border-bottom: 3px solid transparent;
-  transition: all 0.3s;
+  transition: border-color 0.3s;
 }
 
 .tab-button.active,
@@ -61,25 +54,25 @@ header#header {
   color: var(--primary);
 }
 
-/* HERO */
+/* ————————————————————————— HERO ————————————————————————— */
 #hero {
   background: linear-gradient(135deg, var(--pink), var(--beige), var(--teal));
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 4rem 2rem 6rem;
 }
 
-#hero h1 {
+#hero h1#mainTitle {
   font-size: 3rem;
-  color: var(--primary);
-  margin-bottom: 1rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
 }
 
-#hero p {
+#hero h2#subtitle {
   font-size: 1.2rem;
-  color: var(--primary);
+  font-weight: 400;
 }
 
-/* CONTENT AREA */
+/* ————————————————————— CONTENT & CARDS ————————————————————— */
 main#content {
   padding: 2rem;
   display: grid;
@@ -88,13 +81,15 @@ main#content {
 
 .tab-content {
   display: none;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
 .tab-content.active {
   display: block;
+  opacity: 1;
 }
 
-/* CARD STYLE FOR CHARTS & ABOUT */
 .chart-card {
   background: var(--white);
   padding: 1.5rem;
@@ -102,16 +97,36 @@ main#content {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* slightly narrower on large screens */
+/* UNIQUE-VALUES TABLE */
+.unique-table {
+  margin-top: 1rem;
+}
+.unique-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.unique-table th,
+.unique-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+.unique-table th {
+  font-weight: 600;
+  background: var(--lightgray);
+}
+
+/* RESPONSIVE */
 @media (min-width: 768px) {
   main#content {
     max-width: 900px;
     margin: 0 auto;
   }
-  #hero h1 {
+  #hero h1#mainTitle {
     font-size: 4rem;
   }
-  #hero p {
+  #hero h2#subtitle {
     font-size: 1.5rem;
   }
 }

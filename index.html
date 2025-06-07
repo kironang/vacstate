@@ -4,69 +4,52 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VacState Dashboard</title>
-  <!-- Montserrat for that crisp, modern feel -->
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-  <!-- HEADER -->
+  <!-- STICKY TOPBAR: TABS CENTERED -->
   <header id="header">
-    <div class="logo">VacState</div>
     <nav class="nav-tabs">
       <button class="tab-button active" data-tab="A">Adolescent Vacc.</button>
-      <button class="tab-button"        data-tab="B">Influenza</button>
-      <button class="tab-button"        data-tab="C">About</button>
+      <button class="tab-button"         data-tab="B">Influenza</button>
+      <button class="tab-button"         data-tab="C">About</button>
     </nav>
   </header>
 
-  <!-- HERO BANNER -->
+  <!-- RAINBOW HERO: VacState H1 + DYNAMIC H2 SUBTITLE -->
   <section id="hero">
-    <div class="hero-content">
-      <h1>Vaccination Coverage Across the U.S.</h1>
-      <p>Interactive insights into adolescent and influenza vaccine uptake.</p>
-    </div>
+    <h1 id="mainTitle">VacState</h1>
+    <h2 id="subtitle">Unique values for adolescent vaccination dataset.</h2>
   </section>
 
-  <!-- MAIN CONTENT -->
+  <!-- MAIN CONTENT PANES -->
   <main id="content">
-    <!-- Tab A: Adolescent Vaccination Bar Chart -->
-    <div id="tabA" class="tab-content active">
-      <!-- chart injected by D3 -->
-    </div>
-
-    <!-- Tab B: Influenza Coverage Trend -->
-    <div id="tabB" class="tab-content">
-      <!-- chart injected by D3 -->
-    </div>
-
-    <!-- Tab C: About & Sources -->
+    <div id="tabA" class="tab-content active"></div>
+    <div id="tabB" class="tab-content"></div>
     <div id="tabC" class="tab-content">
       <div class="chart-card about-card">
         <h2>About the Data</h2>
-        <p><strong>Adolescent Vaccination Coverage:</strong><br/>
-          Data from CDC: 
-          <a href="https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6" target="_blank">
-            ee48-w5t6
-          </a>
+        <p>
+          <strong>Adolescent Vaccination Coverage:</strong><br/>
+          <a href="https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6"
+             target="_blank">CDC ee48-w5t6</a>
         </p>
-        <p><strong>Influenza Vaccination Coverage:</strong><br/>
-          Data from CDC: 
-          <a href="https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6" target="_blank">
-            vh55-3he6
-          </a>
+        <p>
+          <strong>Influenza Vaccination Coverage:</strong><br/>
+          <a href="https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6"
+             target="_blank">CDC vh55-3he6</a>
         </p>
-        <h3>Design Inspiration</h3>
-        <p>Heavily influenced by Pantone’s pastel gradients, clean cards, and bold typography.</p>
-        <h3>Author</h3>
-        <p>Created by [Your Name].<br/>
-           <a href="mailto:youremail@example.com">youremail@example.com</a>
+        <h2>About the Dashboard</h2>
+        <p>
+          Created by Kiron Ang. For more context, see the research paper or contact
+          <a href="mailto:kiron_ang1@baylor.edu">kiron_ang1@baylor.edu</a>.
         </p>
       </div>
     </div>
   </main>
 
-  <!-- D3 + Tab logic -->
   <script src="script.js"></script>
 </body>
 </html>

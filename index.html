@@ -1,30 +1,32 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>VacState</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VacState Dashboard</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="styles.css"/>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
   <!-- ─── MAIN NAVIGATION ─── -->
   <header id="header">
-    <nav id="mainTabs" class="nav-tabs">
-      <!-- Adolescent vaccines -->
-      <button class="tab-button active" data-mode="adolescent" data-vaccine="HPV">HPV</button>
-      <button class="tab-button"        data-mode="adolescent" data-vaccine="Tetanus">Tetanus</button>
-      <button class="tab-button"        data-mode="adolescent" data-vaccine="Varicella">Varicella</button>
-      <button class="tab-button"        data-mode="adolescent" data-vaccine="≥1 Dose MenACWY">≥1 Dose MenACWY</button>
-      <button class="tab-button"        data-mode="adolescent" data-vaccine="≥2 Doses Hep A">≥2 Doses Hep A</button>
-      <button class="tab-button"        data-mode="adolescent" data-vaccine="≥2 Doses MMR">≥2 Doses MMR</button>
-      <button class="tab-button"        data-mode="adolescent" data-vaccine="≥3 Doses HepB">≥3 Doses HepB</button>
-      <!-- Influenza & About -->
-      <button class="tab-button" data-mode="influenza">Influenza</button>
-      <button class="tab-button" data-mode="about">About</button>
+    <nav class="nav-tabs">
+      <!-- adolescent vaccines -->
+      <button class="tab-button active" data-tab="HPV">HPV</button>
+      <button class="tab-button"        data-tab="TETANUS">Tetanus</button>
+      <button class="tab-button"        data-tab="VARICELLA">Varicella</button>
+      <button class="tab-button"        data-tab="MENACWY">≥1 Dose MenACWY</button>
+      <button class="tab-button"        data-tab="HEPA">≥2 Doses Hep A</button>
+      <button class="tab-button"        data-tab="MMR">≥2 Doses MMR</button>
+      <button class="tab-button"        data-tab="HEPB">≥3 Doses HepB</button>
+      <!-- influenza & about -->
+      <button class="tab-button"        data-tab="INFLUENZA">Influenza</button>
+      <button class="tab-button"        data-tab="ABOUT">About</button>
     </nav>
   </header>
 
@@ -34,51 +36,44 @@
     <h2 id="subtitle">Filter &amp; explore adolescent vaccination dataset.</h2>
   </section>
 
-  <!-- ─── CONTENT AREA ─── -->
+  <!-- ─── CONTENT PANES ─── -->
   <main id="content">
-    <!-- Page title (changes per tab) -->
-    <h1 id="pageTitle">HPV Coverage</h1>
+    <!-- one pane per tab -->
+    <div id="tabHPV" class="tab-content active"></div>
+    <div id="tabTETANUS" class="tab-content"></div>
+    <div id="tabVARICELLA" class="tab-content"></div>
+    <div id="tabMENACWY" class="tab-content"></div>
+    <div id="tabHEPA" class="tab-content"></div>
+    <div id="tabMMR" class="tab-content"></div>
+    <div id="tabHEPB" class="tab-content"></div>
+    <div id="tabINFLUENZA" class="tab-content"></div>
 
-    <!-- Filters panel -->
-    <section
-      id="filters"
-      class="filter-panel chart-card"
-    ></section>
-
-    <!-- Unique‐values table -->
-    <section
-      id="uniqueTable"
-      class="unique-table chart-card"
-    ></section>
-
-    <!-- About pane -->
-    <section
-      id="aboutContent"
-      class="chart-card about-card"
-      hidden
-    >
-      <h2>About the Data</h2>
-      <p>
-        <strong>Adolescent Vaccination Coverage:</strong><br/>
-        <a
-          href="https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6"
-          target="_blank"
-        >CDC ee48-w5t6</a>
-      </p>
-      <p>
-        <strong>Influenza Vaccination Coverage:</strong><br/>
-        <a
-          href="https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6"
-          target="_blank"
-        >CDC vh55-3he6</a>
-      </p>
-      <h2>About the Dashboard</h2>
-      <p>
-        Created by Kiron Ang. Data is pulled directly from the CDC Socrata APIs.
-        For more context, see the research paper or contact
-        <a href="mailto:kiron_ang1@baylor.edu">kiron_ang1@baylor.edu</a>.
-      </p>
-    </section>
+    <!-- ABOUT PANE -->
+    <div id="tabABOUT" class="tab-content">
+      <div class="chart-card about-card">
+        <h2>About the Data</h2>
+        <p>
+          <strong>Adolescent Vaccination Coverage:</strong><br/>
+          <a
+            href="https://data.cdc.gov/Teen-Vaccinations/Vaccination-Coverage-among-Adolescents-13-17-Years/ee48-w5t6"
+            target="_blank"
+          >CDC ee48-w5t6</a>
+        </p>
+        <p>
+          <strong>Influenza Vaccination Coverage:</strong><br/>
+          <a
+            href="https://data.cdc.gov/Flu-Vaccinations/Influenza-Vaccination-Coverage-for-All-Ages-6-Mont/vh55-3he6"
+            target="_blank"
+          >CDC vh55-3he6</a>
+        </p>
+        <h2>About the Dashboard</h2>
+        <p>
+          Created by Kiron Ang. Data is pulled directly from the CDC Socrata APIs.
+          For more context, see the research paper or contact
+          <a href="mailto:kiron_ang1@baylor.edu">kiron_ang1@baylor.edu</a>.
+        </p>
+      </div>
+    </div>
   </main>
 
   <script src="script.js"></script>
